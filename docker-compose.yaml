@@ -19,17 +19,16 @@ services:
     php:
       build:
         context: ./images/
-        dockerfile: php.Dockerfile
+        dockerfile: php_test.Dockerfile
       links:
         - mysql
       volumes:
         - ./www:/var/www
-#        - ./config/id_rsa:/root/.ssh/id_rsa
-        - ./config/auth.json:/root/.composer/auth.json
-#        - $SSH_AUTH_SOCK:/ssh-agent # Forward local machine SSH key to docker
-        - ./config/php_uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
-#      environment:
-#        SSH_AUTH_SOCK: /ssh-agent
+#        - ./config/ssh/id_rsa:/root/.ssh/id_rsa
+        - $SSH_AUTH_SOCK:/ssh-agent
+        - ./config/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      environment:
+        SSH_AUTH_SOCK: /ssh-agent
       networks:
         - 'project'
 
@@ -38,6 +37,9 @@ services:
         command: --default-authentication-plugin=mysql_native_password
         environment:
           MYSQL_ROOT_PASSWORD: 'root'
+          MYSQL_DATABASE: 'magento'
+          MYSQL_USER: 'admin'
+          MYSQL_PASSWORD: 'admin'
         volumes:
           - ./mysql:/var/lib/mysql
         networks:
