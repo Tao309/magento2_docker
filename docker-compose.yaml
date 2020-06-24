@@ -1,0 +1,70 @@
+version: '3'
+
+services:
+    nginx:
+      image: nginx:latest
+      ports:
+        - 8080:80
+        - 443:443
+      working_dir: /var/www/
+      volumes:
+        - ./hosts:/etc/nginx/conf.d
+        - ./www:/var/www
+        - ./logs:/var/log/nginx
+      links:
+        - php
+      networks:
+        - 'project'
+
+    php:
+      build:
+        context: ./images/
+        dockerfile: php.Dockerfile
+      links:
+        - mysql
+      volumes:
+        - ./www:/var/www
+#        - ./config/id_rsa:/root/.ssh/id_rsa
+        - ./config/auth.json:/root/.composer/auth.json
+#        - $SSH_AUTH_SOCK:/ssh-agent # Forward local machine SSH key to docker
+        - ./config/php_uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+#      environment:
+#        SSH_AUTH_SOCK: /ssh-agent
+      networks:
+        - 'project'
+
+    mysql:
+        image: 'mysql:8.0.14'
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+          MYSQL_ROOT_PASSWORD: 'root'
+        volumes:
+          - ./mysql:/var/lib/mysql
+        networks:
+          - 'project'
+        ports:
+            - 33006:3306
+
+    elasticsearch:
+      image: 'docker.elastic.co/elasticsearch/elasticsearch-oss:6.5.4'
+      environment:
+        ES_JAVA_OPTS: '${ES_JAVA_OPTS:--Xms512m -Xmx512m}'
+        discovery.type: 'single-node'
+      ports:
+        - 9201:9200
+        - 9301:9300
+      networks:
+        - 'project'
+
+#    mailhog:
+#      image: mailhog/mailhog:latest
+#      restart: always
+#      ports:
+#        - 1045:1025
+#        - 8045:8025
+#      networks:
+#        - 'project'
+
+
+networks:
+  project:
